@@ -114,6 +114,20 @@ export default function RootLayout() {
                            presentation: "card",
                         }}
                      />
+                     <Stack.Screen
+                        name="hangout/hangout-map"
+                        options={{
+                           presentation: "card",
+                           headerTitle: "Online Users",
+                        }}
+                     />
+                     <Stack.Screen
+                        name="hangout/liked-users"
+                        options={{
+                           presentation: "card",
+                           headerTitle: "People You Liked",
+                        }}
+                     />
                   </Stack>
                   <StatusBar style="auto" />
                </ThemeProvider>
