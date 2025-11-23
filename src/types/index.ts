@@ -64,15 +64,6 @@ export interface Event {
    category?: string;
 }
 
-export interface Comment {
-   id: string;
-   userId: string;
-   user: User;
-   content: string;
-   image?: string;
-   timestamp: string;
-   likes?: number;
-}
 
 // Hangout related types
 export interface Hangout {
@@ -97,13 +88,16 @@ export interface HangoutActivity {
 
 // Chat related types
 export interface Chat {
-   id: string;
-   type: "event" | "user" | "group" | "dm";
-   name?: string;
-   participants?: User[];
-   lastMessage?: Message;
-   unreadCount?: number;
-   eventId?: string;
+  id: string;
+  type: 'event' | 'user' | 'group' | 'dm' | 'community';
+  name?: string;
+  participants?: User[];
+  lastMessage?: Message;
+  unreadCount?: number;
+  eventId?: string;
+  communityId?: number;
+  communityAvatar?: string;
+
 }
 
 export interface Message {
@@ -125,24 +119,101 @@ export interface QuickMessage {
 
 // Community/Discussion related types
 export interface Community {
-   id: string;
-   name: string;
-   description?: string;
-   image?: string;
-   memberCount?: number;
-   posts: Post[];
+  id: number;
+  name: string;
+  description?: string | null;
+  bio?: string | null;
+  image_url?: string | null;
+  cover_image?: string | null;
+
+  created_by: string;
+
+  member_count: number;
+  post_count: number;
+  is_private: boolean;
+  
+  chat_conversation_id?: number | null;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommunityMember {
+  id: number;
+  community_id: number;
+  username: string;
+  role: 'admin' | 'moderator' | 'member';
+  joined_at: string;
+  user?: User;
+}
+
+export interface CommunityJoinRequest {
+  id: number;
+  community_id: number;
+  username: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  users?: User;
+}
+
+export interface PostMedia {
+  id: number;
+  post_id: number;
+  media_url: string;
+  media_type: "image" | "video";
+  position: number;
+  created_at: string;
 }
 
 export interface Post {
-   id: string;
-   communityId: string;
-   userId: string;
-   user: User;
-   content: string;
-   image?: string;
-   timestamp: string;
-   likes: number;
-   comments: Comment[];
+  id: number;
+  author_username: string;
+  content?: string | null;
+  status?: string | null;
+  audience: "public" | "followers" | "close_friends" | "private";
+  disable_comments: boolean;
+  hide_like_count: boolean;
+  like_count: number;
+  comment_count: number;
+  post_media: PostMedia[];
+  community_id?: number | null;
+  community_name?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+  authorAvatar?: string;
+  authorDisplayName?: string;
+}
+
+export interface Comment {
+  id: number;
+  post_id: number;
+  author_username: string;
+  content: string;
+  parent_id: number | null;
+  created_at: string;
+};
+
+export interface UserLite {
+  username: string;
+  avatar?: string | null;
+  name?: string | null;
+}
+
+export interface CommentsSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  communityId: number;
+  postId: number;
+  me?: UserLite | null;
+}
+
+export interface LocalMediaFile {
+  uri: string;
+  type: string;
+  name: string;
 }
 
 // Notification related types

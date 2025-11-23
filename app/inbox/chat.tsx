@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Message, User } from '@/src/types';
-import { formatTime } from '@/src/utils/date';
+import { formatMessageTime } from '@/src/utils/date';
 import WebSocketService from '@/src/services/websocket';
 import ImageService from '@/src/services/image';
 import ApiService from '@/src/services/api';
@@ -27,7 +27,7 @@ export default function ChatScreen() {
   const params = useLocalSearchParams();
   const chatId = params.id as string;
   const { user: currentUser } = useAuth();
-  const { colors, isPro } = useTheme();
+  const { colors } = useTheme();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [userMap, setUserMap] = useState<Record<string, User>>({});
@@ -112,6 +112,11 @@ export default function ChatScreen() {
     const imageUrl: string | undefined =
       raw?.image || raw?.message_media?.[0]?.media_url || undefined;
 
+    // CRITICAL: Ensure we use the server's timestamp, not current time
+    // Priority: timestamp (WebSocket) > created_at (REST API) > fallback only for temp messages
+    const messageTimestamp = raw?.timestamp || raw?.created_at;
+    const timestamp = messageTimestamp || (raw?.id?.toString().startsWith('temp-') ? new Date().toISOString() : '');
+
     return {
       id: String(raw?.id ?? `${Date.now()}`),
       chatId: String(raw?.chatId ?? raw?.conversation_id ?? chatId),
@@ -119,7 +124,7 @@ export default function ChatScreen() {
       sender,
       content: raw?.content ?? '',
       image: imageUrl,
-      timestamp: raw?.timestamp ?? raw?.created_at ?? new Date().toISOString(),
+      timestamp: timestamp,
       read: Boolean(raw?.read ?? false),
     };
   };
@@ -320,10 +325,15 @@ export default function ChatScreen() {
         await ApiService.sendMessageWithImage(
           chatId,
           currentUser.username,
-            inputText || '📷 Photo',
+          inputText || '📷 Photo',
           imageFile
         );
         setInputText('');
+        
+        // Reload messages to show the newly sent image
+        setTimeout(() => {
+          loadMessages();
+        }, 500);
       }
 
       setUploading(false);
@@ -449,7 +459,7 @@ export default function ChatScreen() {
               },
             ]}
           >
-            {formatTime(item.timestamp)}
+            {formatMessageTime(item.timestamp)}
           </Text>
         </View>
       </View>
@@ -463,13 +473,6 @@ export default function ChatScreen() {
           title: otherUser?.name || 'Conversation',
           headerRight: () => (
             <View style={styles.headerRight}>
-
-              <TouchableOpacity style={styles.headerButton}>
-                <Ionicons name="call-outline" size={24} color={colors.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.headerButton}>
-                <Ionicons name="videocam-outline" size={24} color={colors.primary} />
-              </TouchableOpacity>
               <TouchableOpacity style={styles.headerButton}>
                 <Ionicons name="ellipsis-vertical" size={24} color={colors.primary} />
               </TouchableOpacity>
